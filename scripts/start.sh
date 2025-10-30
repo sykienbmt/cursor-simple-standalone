@@ -88,5 +88,5 @@ echo -e "${CYAN}🚀 Starting Cursor Simple...${NC}"
 echo ""
 
 cd "$TEMP_DIR"
-$PYTHON_CMD cursor_simple.py
+$PYTHON_CMD cursor_simple.py < /dev/tty
 

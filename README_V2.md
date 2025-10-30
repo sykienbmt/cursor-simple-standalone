@@ -45,81 +45,24 @@
 
 ## 🔑 Chi tiết các chức năng
 
-### Option 3: Quick Update Token - 2 Chế độ
+### Option 3: Quick Update Token
 
-Khi chọn option 3, bạn sẽ được hỏi chọn chế độ:
-
-#### **Chế độ 1: Standard (Tiêu chuẩn)**
+**Chức năng**:
 ```
 1. Đóng Cursor
 2. Lấy token từ API
-3. Cập nhật vào database
-4. Bạn cần mở lại Cursor
-```
-✅ Phù hợp khi: Muốn đảm bảo 100% token được áp dụng ngay
-
-#### **Chế độ 2: Seamless (Mượt mà) ⭐ RECOMMENDED**
-```
-1. KHÔNG đóng Cursor
-2. Lấy token từ API
-3. Cập nhật vào database
-4. Cursor tự động dùng token mới
-```
-✅ Phù hợp khi: 
-- Đang làm việc với Cursor, không muốn đóng
-- Thay đổi tài khoản nhanh
-- Cập nhật token định kỳ
-
-**QUAN TRỌNG**: Ở chế độ Seamless, Cursor sẽ KHÔNG yêu cầu bạn đăng nhập lại!
-
----
-
-### Option 6: Auto Token Refresh (Watch Mode)
-
-**Chức năng**:
-- Tự động làm mới token theo khoảng thời gian
-- Sử dụng Seamless Mode (không đóng Cursor)
-- Giám sát thời gian hết hạn token
-- Tự động refresh khi token sắp hết hạn
-
-**Cách sử dụng**:
-```
-1. Chọn option 6
-2. Chọn khoảng thời gian refresh:
-   - 30 phút
-   - 1 giờ
-   - 2 giờ
-   - 4 giờ
-   - Custom
-3. Để chạy, nhấn Ctrl+C để dừng
+3. Refresh token qua Cursor server
+4. Cập nhật vào database
+5. Hiển thị thông tin tài khoản
 ```
 
-**Kết quả mẫu**:
-```
-============================================================
-🔄 Auto Refresh Started
-============================================================
-Refresh Interval: 60 minutes
-Mode: Seamless (Cursor stays running)
-Press Ctrl+C to stop...
+**Đặc điểm**:
+- ✅ Tự động đóng Cursor trước khi cập nhật
+- ✅ Đảm bảo token được áp dụng 100%
+- ✅ Không cần nhập gì, hoàn toàn tự động
+- ✅ Hiển thị email, password, token ngay sau khi update
 
-[Cycle 1] 2025-10-30 10:15:30
-Current Email: user@cursor.com
-Expires At: 2025-11-14 15:30:45
-✓ Token valid for 15 more days
-
-Refreshing token from API...
-✅ Token Updated Successfully!
-Account Information:
-├─ Email: user@cursor.com
-├─ Token: eyJhbGc...
-├─ Expires: 2025-11-15 15:30:45
-└─ Valid for: 16 days
-
-Token updated seamlessly - Cursor will use new token automatically!
-
-⏳ Next refresh in 60 minutes...
-```
+**Lưu ý**: Phải đóng Cursor trước khi update token để tránh conflict database
 
 ---
 
@@ -170,11 +113,11 @@ def decode_jwt(self, token: str) -> Optional[Dict]:
         return None
 ```
 
-### Seamless Token Update
-**Key Insight**: 
+### Token Update Process
+**Cách thức hoạt động**: 
 - Cursor đọc token từ SQLite database `state.vscdb`
-- Nếu update token trong database mà không đóng Cursor, Cursor sẽ tự động sử dụng token mới khi cần
-- Điều quan trọng là phải update đúng các key:
+- Phải đóng Cursor trước khi update để tránh database lock
+- Update các key quan trọng:
   - `cursorAuth/accessToken`
   - `cursorAuth/refreshToken`
   - `cursorAuth/expiresAt` (với timestamp chính xác từ JWT)
@@ -187,26 +130,35 @@ def decode_jwt(self, token: str) -> Optional[Dict]:
 | Tính năng | v1.3.0 | v2.0.0 |
 |-----------|--------|---------|
 | Hiển thị ngày hết hạn | ❌ "Unknown" | ✅ Chính xác đến giây |
-| Update token không đóng Cursor | ❌ | ✅ Seamless Mode |
-| Auto refresh token | ❌ | ✅ Watch Mode |
 | Decode JWT | ❌ | ✅ Full decoder |
-| Multi-mode update | ❌ | ✅ Standard + Seamless |
 | Token expiry warning | ❌ | ✅ Màu sắc cảnh báo |
+| Tự động đóng Cursor | ❌ Thủ công | ✅ Tự động |
+| Hiển thị expiry datetime | ❌ | ✅ YYYY-MM-DD HH:MM:SS |
+| Tính số ngày còn lại | ❌ Manual | ✅ Tự động từ JWT |
 
 ---
 
 ## 🎯 Use Cases
 
-### 1. Developer đang code, muốn đổi tài khoản
+### 1. Cần đổi tài khoản mới
 ```bash
-Chọn option 3 → Chọn mode 2 (Seamless)
-→ Token đổi ngay, không mất code đang làm
+Chọn option 3 (Quick Update Token)
+→ Tự động đóng Cursor, lấy token mới, update database
+→ Mở lại Cursor với tài khoản mới
 ```
 
-### 2. Kiểm tra xem token còn bao lâu hết hạn
+### 2. Reset toàn bộ (Machine ID + Token)
+```bash
+Chọn option 4 (Quick Reset)
+→ Tự động reset Machine ID và update token
+→ Mở lại Cursor là xong
+```
+
+### 3. Kiểm tra xem token còn bao lâu hết hạn
 ```bash
 Nhìn vào menu chính
 → Thấy ngay "📅 Expires At: 2025-11-14 15:30:45"
+→ "⏳ Remaining Pro Trial: 15 days"
 ```
 
 ---

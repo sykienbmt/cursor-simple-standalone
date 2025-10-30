@@ -8,12 +8,12 @@
 
 ### Windows (PowerShell)
 ```powershell
-irm https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/start.ps1 | iex
+irm https://raw.githubusercontent.com/sykienbmt/simple-standalone/HEAD/scripts/start.ps1 | iex
 ```
 
 ### Linux/macOS
 ```bash
-curl -fsSL https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/start.sh | bash
+curl -fsSL https://raw.githubusercontent.com/sykienbmt/simple-standalone/HEAD/scripts/start.sh | bash
 ```
 
 **Chạy ngay lập tức!**
