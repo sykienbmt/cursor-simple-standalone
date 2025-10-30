@@ -4,18 +4,67 @@
 
 ---
 
-## ⚡ FASTEST WAY (Khuyến nghị)
+## 🚀 RUN INSTANTLY (Không cần cài đặt!)
+
+### Windows (PowerShell)
+```powershell
+irm https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/start.ps1 | iex
+```
+
+### Linux/macOS
+```bash
+curl -fsSL https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/start.sh | bash
+```
+
+**Chạy ngay lập tức!**
+- ✅ Tải về temp folder
+- ✅ Chạy tool
+- ✅ Tự động dọn dẹp sau khi thoát
+- ✅ Không cần cài đặt gì cả!
+
+---
+
+## 💾 HOẶC CÀI ĐẶT VÀO MÁY
+
+### Windows (PowerShell)
+```powershell
+irm https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/install.ps1 | iex
+```
+
+### Linux/macOS
+```bash
+curl -fsSL https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/install.sh | bash
+```
+
+**Cài đặt vĩnh viễn vào máy!**
+- ✅ Cài vào `%USERPROFILE%\cursor-simple-standalone` (Windows)
+- ✅ Hoặc `~/cursor-simple-standalone` (Linux/macOS)
+- ✅ Chạy bất cứ lúc nào với `START.bat` hoặc `./START.sh`
+
+---
+
+## ⚡ SAU KHI CÀI ĐẶT - FASTEST WAY
 
 ### Cách 1: Chỉ Update Token (3 giây)
-```bash
-START.bat  # hoặc ./START.sh
+```powershell
+cd $env:USERPROFILE\cursor-simple-standalone  # Windows
+# hoặc: cd ~/cursor-simple-standalone         # Linux/macOS
+
+START.bat  # Windows
+# hoặc: ./START.sh  # Linux/macOS
+
 # Chọn: 3 (Quick Update Token)
 # Xong! Tự động fetch và hiển thị account/pass
 ```
 
 ### Cách 2: Full Reset (10 giây)
-```bash
-START.bat  # hoặc ./START.sh
+```powershell
+cd $env:USERPROFILE\cursor-simple-standalone  # Windows
+# hoặc: cd ~/cursor-simple-standalone         # Linux/macOS
+
+START.bat  # Windows
+# hoặc: ./START.sh  # Linux/macOS
+
 # Chọn: 4 (Quick Reset)
 # Xong! Reset Machine ID + Token tự động
 ```

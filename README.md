@@ -22,21 +22,39 @@ A lightweight, cross-platform tool to manage Cursor IDE authentication and machi
 
 ---
 
-## ⚡ One-Click Installation (Recommended)
+## ⚡ Quick Start (One Command!)
 
-### Windows (PowerShell)
+### 🚀 Run Instantly (No Installation)
 
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/start.ps1 | iex
+```
+
+**Linux / macOS:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/start.sh | bash
+```
+
+This will:
+- ✅ Download tool to temp folder
+- ✅ Install dependencies
+- ✅ Run immediately
+- ✅ Auto-cleanup after exit
+
+### 💾 Or Install Permanently
+
+**Windows (PowerShell):**
 ```powershell
 irm https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/install.ps1 | iex
 ```
 
-### Linux / macOS
-
+**Linux / macOS:**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/install.sh | bash
 ```
 
-**What it does:**
+This will:
 - ✅ Auto-detects/installs Python
 - ✅ Downloads all files from GitHub
 - ✅ Installs dependencies
@@ -46,16 +64,17 @@ See [scripts/README.md](scripts/README.md) for more details.
 
 ---
 
-## ⚡ Quick Start
+## 📂 After Installation - Quick Start
 
 ### Windows
 ```powershell
-# Just double-click or run:
+cd $env:USERPROFILE\cursor-simple-standalone
 START.bat
 ```
 
 ### macOS / Linux
 ```bash
+cd ~/cursor-simple-standalone
 ./START.sh
 ```
 

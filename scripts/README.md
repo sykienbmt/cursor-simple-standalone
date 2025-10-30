@@ -1,8 +1,36 @@
-# 🚀 Cursor Simple - One-Click Installation Scripts
+# 🚀 Cursor Simple - One-Click Scripts
 
-One-command installation for Cursor Simple tool. No manual setup required!
+Run or install Cursor Simple with just one command!
 
-## ⚡ Quick Install
+## ⚡ Quick Start (Run Instantly)
+
+### Windows (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/start.ps1 | iex
+```
+
+**What it does:**
+- ✅ Downloads to temp folder
+- ✅ Runs immediately
+- ✅ Auto-cleanup after exit
+- ✅ No installation needed
+
+### Linux / macOS
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/start.sh | bash
+```
+
+**What it does:**
+- ✅ Downloads to `/tmp`
+- ✅ Runs immediately
+- ✅ Auto-cleanup after exit
+- ✅ No installation needed
+
+---
+
+## 💾 Or Install Permanently
 
 ### Windows (PowerShell)
 
