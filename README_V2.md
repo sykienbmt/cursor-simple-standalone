@@ -2,15 +2,7 @@
 
 ## ✨ Tính năng mới trong phiên bản 2.0.0
 
-### 🔑 1. Seamless Token Update (Cập nhật Token Mượt Mà)
-**Vấn đề cũ**: Khi cập nhật token, phải đóng Cursor → Cursor yêu cầu đăng nhập lại khi mở.
-
-**Giải pháp mới**: 
-- **Seamless Mode**: Cập nhật token KHÔNG cần đóng Cursor
-- Cursor tự động sử dụng token mới mà không yêu cầu đăng nhập lại
-- Hoàn hảo cho việc thay đổi tài khoản nhanh chóng
-
-### 📅 2. JWT Token Decoder - Hiển thị chính xác ngày hết hạn
+### 📅 JWT Token Decoder - Hiển thị chính xác ngày hết hạn
 **Vấn đề cũ**: Không hiển thị được ngày hết hạn chính xác của token.
 
 **Giải pháp mới**:
@@ -18,6 +10,12 @@
 - Hiển thị ngày giờ hết hạn cụ thể (YYYY-MM-DD HH:MM:SS)
 - Tính toán số ngày còn lại tự động
 - Cảnh báo màu sắc (Xanh > 7 ngày, Vàng 2-7 ngày, Đỏ < 2 ngày)
+
+### 🔑 Cải thiện Token Update
+**Cải tiến**:
+- Tự động đóng Cursor trước khi cập nhật token
+- Đảm bảo token được áp dụng ngay lập tức
+- Không cần thao tác thủ công
 
 
 ---
