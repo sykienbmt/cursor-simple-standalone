@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Cursor Simple - Lightweight Cross-Platform Tool
-Version: 1.2.0
+Version: 1.3.0
 Author: Cursor Free VIP Community
 License: Educational Use Only
 
@@ -10,6 +10,7 @@ Features:
   2. Reset Machine ID
   3. Update Token (Auto-fetch from API)
   4. Quick Reset (Machine ID + Token)
+  5. Get Account Info (View account details)
 
 Supported Platforms: Windows | macOS | Linux
 Dependencies: colorama (optional), requests (for API integration)
@@ -55,7 +56,8 @@ EMOJI = {
     'ERROR': '❌',
     'INFO': 'ℹ️',
     'WARNING': '⚠️',
-    'ARROW': '➜'
+    'ARROW': '➜',
+    'ACCOUNT': '👤'
 }
 
 class CursorSimple:
@@ -398,6 +400,63 @@ class CursorSimple:
         print(f"{Fore.RED}{EMOJI['ERROR']} Failed to fetch token after {max_retries} attempts{Style.RESET_ALL}")
         return None
     
+    def get_account_info(self):
+        """Get and display account information from API"""
+        print(f"\n{Fore.CYAN}{EMOJI['ACCOUNT']} Get Account Information{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}{'='*60}{Style.RESET_ALL}\n")
+        
+        if not HAS_REQUESTS:
+            print(f"{Fore.RED}{EMOJI['ERROR']} 'requests' module not installed{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}Install it with: pip install requests{Style.RESET_ALL}")
+            return False
+        
+        print(f"{Fore.CYAN}{EMOJI['INFO']} Fetching account from API...{Style.RESET_ALL}\n")
+        
+        # Use the default API
+        api_url = "https://script.google.com/macros/s/AKfycbxN6lLVmJk8b8qgi63eXeaeBzaiD0xeZnXlv6_PfbGBrZr3BhN7LT0QyMMga-ixT7M_/exec"
+        
+        token_data = self.fetch_token_from_api(api_url)
+        
+        if not token_data:
+            print(f"{Fore.RED}{EMOJI['ERROR']} Failed to fetch account information{Style.RESET_ALL}")
+            return False
+        
+        # Extract information
+        token_full = token_data['token']
+        email = token_data['email']
+        password = token_data.get('password', 'N/A')
+        row = token_data.get('row', 'N/A')
+        
+        # Refresh token to get the actual accessToken
+        print(f"{Fore.CYAN}{EMOJI['INFO']} Refreshing token...{Style.RESET_ALL}")
+        access_token = self.refresh_cursor_token(token_full)
+        
+        # Display full account information
+        print(f"\n{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}{EMOJI['ACCOUNT']} Account Information{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}\n")
+        
+        print(f"{Fore.CYAN}Row Number:{Style.RESET_ALL} {row}")
+        print(f"{Fore.CYAN}{'─'*60}{Style.RESET_ALL}")
+        
+        print(f"\n{Fore.YELLOW}Username/Email:{Style.RESET_ALL}")
+        print(f"  {email}")
+        
+        print(f"\n{Fore.YELLOW}Password:{Style.RESET_ALL}")
+        print(f"  {password}")
+        
+        print(f"\n{Fore.YELLOW}Full Token (with prefix):{Style.RESET_ALL}")
+        print(f"  {token_full}")
+        
+        print(f"\n{Fore.YELLOW}Access Token (refreshed):{Style.RESET_ALL}")
+        print(f"  {access_token}")
+        
+        print(f"\n{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}{EMOJI['SUCCESS']} Account information displayed successfully!{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}\n")
+        
+        return True
+    
     def update_token(self):
         """Quick update token - auto-fetch from API, no confirmations"""
         print(f"\n{Fore.CYAN}{EMOJI['TOKEN']} Quick Update Token{Style.RESET_ALL}")
@@ -685,6 +744,7 @@ class CursorSimple:
         print(f"{Fore.GREEN}2.{Style.RESET_ALL} {EMOJI['RESET']} Reset Machine ID")
         print(f"{Fore.CYAN}3.{Style.RESET_ALL} {EMOJI['TOKEN']} Quick Update Token (Auto){Style.RESET_ALL}")
         print(f"{Fore.CYAN}4.{Style.RESET_ALL} {EMOJI['SUCCESS']} Quick Reset (Machine ID + Token){Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} {EMOJI['ACCOUNT']} Get Account Info{Style.RESET_ALL}")
         print(f"{Fore.GREEN}0.{Style.RESET_ALL} {EMOJI['QUIT']} Exit")
         
         print(f"\n{Fore.CYAN}System: {self.system}{Style.RESET_ALL}")
@@ -699,7 +759,7 @@ class CursorSimple:
             self.print_menu()
             
             try:
-                choice = input(f"\n{Fore.YELLOW}{EMOJI['ARROW']} Enter choice (0-4): {Style.RESET_ALL}").strip()
+                choice = input(f"\n{Fore.YELLOW}{EMOJI['ARROW']} Enter choice (0-5): {Style.RESET_ALL}").strip()
                 
                 if choice == '0':
                     print(f"\n{Fore.CYAN}{EMOJI['INFO']} Goodbye!{Style.RESET_ALL}")
@@ -714,8 +774,10 @@ class CursorSimple:
                     self.update_token()
                 elif choice == '4':
                     self.quick_reset()
+                elif choice == '5':
+                    self.get_account_info()
                 else:
-                    print(f"{Fore.RED}{EMOJI['ERROR']} Invalid choice. Please enter 0-4{Style.RESET_ALL}")
+                    print(f"{Fore.RED}{EMOJI['ERROR']} Invalid choice. Please enter 0-5{Style.RESET_ALL}")
                 
                 input(f"\n{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
                 self.clear_screen()
@@ -735,7 +797,7 @@ def main():
 {Fore.CYAN}╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
 ║           🚀 Cursor Simple - Lightweight Tool 🚀         ║
-║                   Version 1.2.0                          ║
+║                   Version 1.3.0                          ║
 ║                                                           ║
 ║  Cross-Platform Support: Windows | macOS | Linux         ║
 ║                                                           ║

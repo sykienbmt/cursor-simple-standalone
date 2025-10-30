@@ -2,7 +2,7 @@
 
 A lightweight, cross-platform tool to manage Cursor IDE authentication and machine ID.
 
-![Version](https://img.shields.io/badge/version-1.1.1-blue)
+![Version](https://img.shields.io/badge/version-1.3.0-blue)
 ![Python](https://img.shields.io/badge/python-3.7+-green)
 ![Platform](https://img.shields.io/badge/platform-Windows%20|%20macOS%20|%20Linux-lightgrey)
 ![License](https://img.shields.io/badge/license-Educational-orange)
@@ -13,11 +13,38 @@ A lightweight, cross-platform tool to manage Cursor IDE authentication and machi
 - 🔄 **Reset Machine ID** - Generate new machine ID for trial reset  
 - 🔑 **Quick Update Token** - Auto-fetch & update (no confirmations!)
 - ⚡ **Quick Reset** - Full reset: Machine ID + Token (fully automated!)
+- 👤 **Get Account Info** - Display full account details (username, password, token)
 - 🌐 **API Integration** - Fetch tokens from Google Apps Script API
 - 🧹 **Auto Clear** - Clean terminal after each operation
 - 🌍 **Cross-Platform** - Works on Windows, macOS, and Linux
 - 📦 **Lightweight** - Minimal dependencies (colorama, requests)
 - 🎯 **Standalone** - No browser required
+
+---
+
+## ⚡ One-Click Installation (Recommended)
+
+### Windows (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/install.ps1 | iex
+```
+
+### Linux / macOS
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/install.sh | bash
+```
+
+**What it does:**
+- ✅ Auto-detects/installs Python
+- ✅ Downloads all files from GitHub
+- ✅ Installs dependencies
+- ✅ Installs to `%USERPROFILE%\cursor-simple-standalone` (Windows) or `~/cursor-simple-standalone` (Linux/macOS)
+
+See [scripts/README.md](scripts/README.md) for more details.
+
+---
 
 ## ⚡ Quick Start
 
@@ -77,6 +104,7 @@ chmod +x cursor_simple.py
 2. 🔄 Reset Machine ID
 3. 🔑 Quick Update Token (Auto)
 4. ✅ Quick Reset (Machine ID + Token)
+5. 👤 Get Account Info
 0. ❌ Exit
 ```
 
@@ -135,6 +163,54 @@ Automatically performs:
 - Automated workflows
 
 **No user input needed** - just press 4 and wait!
+
+### 5. Get Account Info 👤 (VIEW ONLY)
+**Display full account information without updating anything**
+
+Automatically performs:
+1. ✅ Fetch account from API
+2. ✅ Refresh token via Cursor server
+3. ✅ Display all information
+
+**Shows:**
+- Row number from API
+- Username/Email
+- Password
+- Full token (with prefix)
+- Access token (refreshed)
+
+**Perfect for:**
+- Checking account details
+- Verifying tokens
+- Getting credentials without modifying anything
+
+**No changes made** - just displays information!
+
+**Output:**
+```
+============================================================
+👤 Account Information
+============================================================
+
+Row Number: 42
+────────────────────────────────────────────────────────────
+
+Username/Email:
+  example@email.com
+
+Password:
+  password123
+
+Full Token (with prefix):
+  user_01K8B61KGN40J168E0KMZKY0CH%3A%3AeyJhbGc...
+
+Access Token (refreshed):
+  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+============================================================
+✅ Account information displayed successfully!
+============================================================
+```
 
 ## 🔑 How to Get Token
 
@@ -297,6 +373,27 @@ Part of the Cursor Free VIP community project.
 
 ---
 
-**Version**: 1.0.0  
-**Last Updated**: 2025-10-29
+## 🔄 Update
+
+To update to the latest version, just run the one-click installer again!
+
+**Windows:**
+```powershell
+irm https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/install.ps1 | iex
+```
+
+**Linux/macOS:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/install.sh | bash
+```
+
+---
+
+**Version**: 1.3.0  
+**Last Updated**: 2025-10-30
+
+**What's New in 1.3.0:**
+- 👤 Added "Get Account Info" feature - view full account details
+- 🚀 One-click installation scripts
+- 📝 Improved documentation
 
