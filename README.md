@@ -62,7 +62,30 @@ START.bat
 **That's it!** The script will:
 - ✅ Auto-install dependencies (first time)
 - ✅ Launch the tool
+- ✅ Display current account info on screen
 - ✅ No manual setup needed
+
+### 📺 What You'll See:
+
+```
+============================================================
+📋 Cursor Simple - Cross-Platform Tool
+============================================================
+
+📧 Email: katrinaDixong4e92@oficial.us
+📋 Subscription: Free_trial (trialing)
+⏳ Remaining Pro Trial: 2 days
+────────────────────────────────────────────────────────────
+
+1. ❌ Quit Cursor
+2. 🔄 Reset Machine ID
+3. 🔑 Quick Update Token (Auto)
+4. ✅ Quick Reset (Machine ID + Token)
+5. 👤 Get Account Info (from API)
+0. ❌ Exit
+```
+
+See [DEMO_OUTPUT.md](DEMO_OUTPUT.md) for full output examples.
 
 ---
 
@@ -393,7 +416,9 @@ curl -fsSL https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/
 **Last Updated**: 2025-10-30
 
 **What's New in 1.3.0:**
-- 👤 Added "Get Account Info" feature - view full account details
+- 📺 **Real-time Account Display** - Shows current email, subscription, and remaining days on main screen
+- 👤 Added "Get Account Info" feature - view full account details from API
 - 🚀 One-click installation scripts
-- 📝 Improved documentation
+- 🎨 Color-coded remaining days indicator (Green > Yellow > Red)
+- 📝 Improved documentation with demo output examples
 

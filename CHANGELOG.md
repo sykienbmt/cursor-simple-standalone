@@ -2,6 +2,46 @@
 
 All notable changes to Cursor Simple will be documented in this file.
 
+## [1.3.0] - 2025-10-30
+
+### Added
+- 📺 **Real-time Account Display** on main menu
+  - Shows current email from Cursor database
+  - Displays subscription status (Free_trial, Pro, etc.)
+  - Shows remaining trial days with color coding:
+    - 🟢 Green: > 7 days
+    - 🟡 Yellow: 3-7 days  
+    - 🔴 Red: < 3 days
+  - Auto-refreshes token to get accurate remaining days
+- 👤 **Get Account Info** feature (Menu Option 5)
+  - Fetches account details from API
+  - Displays username, password, and tokens
+  - Shows both full token and refreshed access token
+  - Read-only - doesn't modify anything
+- 🚀 **One-Click Installation Scripts**
+  - `scripts/install.ps1` for Windows (PowerShell)
+  - `scripts/install.sh` for Linux/macOS
+  - Auto-downloads all files from GitHub
+  - Auto-installs Python (Windows via winget)
+  - Auto-installs dependencies
+- 📝 **Documentation Improvements**
+  - Added `DEMO_OUTPUT.md` with example outputs
+  - Added `scripts/README.md` for installation guide
+  - Updated main README with visual examples
+
+### Changed
+- Menu now shows "Get Account Info (from API)" for option 5
+- Version updated from 1.2.0 → 1.3.0
+- Menu choice range updated from 0-4 → 0-5
+
+### Technical
+- Added `get_current_account_info()` - reads account from Cursor database
+- Enhanced `print_menu()` to display real-time account info
+- Added error handling for missing database
+- Added timeout handling for token refresh (10s)
+
+---
+
 ## [1.2.0] - 2025-10-29
 
 ### Fixed

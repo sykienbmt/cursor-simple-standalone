@@ -590,6 +590,65 @@ class CursorSimple:
         else:
             os.system('clear')
     
+    def get_current_account_info(self):
+        """Get current account information from Cursor database"""
+        try:
+            sqlite_path = self.paths['sqlite']
+            
+            if not os.path.exists(sqlite_path):
+                return None
+            
+            conn = sqlite3.connect(sqlite_path)
+            cursor = conn.cursor()
+            
+            # Get email
+            cursor.execute("SELECT value FROM ItemTable WHERE key = 'cursorAuth/cachedEmail'")
+            email_result = cursor.fetchone()
+            email = email_result[0] if email_result else "Not logged in"
+            
+            # Get access token to check subscription
+            cursor.execute("SELECT value FROM ItemTable WHERE key = 'cursorAuth/accessToken'")
+            token_result = cursor.fetchone()
+            
+            # Default values
+            subscription = "Free_trial"
+            remaining_days = "Unknown"
+            
+            # Try to get subscription info from token if available
+            if token_result and HAS_REQUESTS:
+                try:
+                    # Try to refresh and get subscription info
+                    token = token_result[0]
+                    refresh_server = 'https://token.cursorpro.com.cn'
+                    
+                    # Encode token if needed
+                    if '::' in token and '%3A%3A' not in token:
+                        token = token.replace('::', '%3A%3A')
+                    
+                    url = f"{refresh_server}/reftoken?token={token}"
+                    response = requests.get(url, timeout=10)
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        if data.get('code') == 0:
+                            remaining_days = data.get('data', {}).get('days_left', 'Unknown')
+                            # If has valid subscription, mark as Pro trial
+                            if remaining_days != 'Unknown' and remaining_days > 0:
+                                subscription = "Free_trial (trialing)"
+                except:
+                    pass
+            
+            conn.close()
+            
+            return {
+                'email': email,
+                'subscription': subscription,
+                'remaining_days': remaining_days
+            }
+            
+        except Exception as e:
+            return None
+    
     def quick_reset(self):
         """Quick reset: Machine ID + Token in one go (no confirmations)"""
         print(f"\n{Fore.CYAN}{EMOJI['RESET']} Quick Reset - Machine ID + Token{Style.RESET_ALL}")
@@ -736,15 +795,35 @@ class CursorSimple:
     
     def print_menu(self):
         """Print main menu"""
+        # Get current account info
+        account_info = self.get_current_account_info()
+        
         print(f"\n{Fore.CYAN}{'='*60}{Style.RESET_ALL}")
         print(f"{Fore.CYAN}{EMOJI['MENU']} Cursor Simple - Cross-Platform Tool{Style.RESET_ALL}")
         print(f"{Fore.CYAN}{'='*60}{Style.RESET_ALL}\n")
+        
+        # Display current account info if available
+        if account_info:
+            print(f"{Fore.GREEN}📧 Email:{Style.RESET_ALL} {account_info['email']}")
+            print(f"{Fore.YELLOW}📋 Subscription:{Style.RESET_ALL} {account_info['subscription']}")
+            
+            if account_info['remaining_days'] != 'Unknown':
+                days_color = Fore.GREEN if account_info['remaining_days'] > 7 else Fore.YELLOW if account_info['remaining_days'] > 2 else Fore.RED
+                print(f"{days_color}⏳ Remaining Pro Trial:{Style.RESET_ALL} {account_info['remaining_days']} days")
+            else:
+                print(f"{Fore.CYAN}⏳ Remaining Pro Trial:{Style.RESET_ALL} {account_info['remaining_days']}")
+            
+            print(f"{Fore.CYAN}{'─'*60}{Style.RESET_ALL}\n")
+        else:
+            print(f"{Fore.YELLOW}📧 Email:{Style.RESET_ALL} Not logged in")
+            print(f"{Fore.YELLOW}📋 Subscription:{Style.RESET_ALL} No active session")
+            print(f"{Fore.CYAN}{'─'*60}{Style.RESET_ALL}\n")
         
         print(f"{Fore.GREEN}1.{Style.RESET_ALL} {EMOJI['QUIT']} Quit Cursor")
         print(f"{Fore.GREEN}2.{Style.RESET_ALL} {EMOJI['RESET']} Reset Machine ID")
         print(f"{Fore.CYAN}3.{Style.RESET_ALL} {EMOJI['TOKEN']} Quick Update Token (Auto){Style.RESET_ALL}")
         print(f"{Fore.CYAN}4.{Style.RESET_ALL} {EMOJI['SUCCESS']} Quick Reset (Machine ID + Token){Style.RESET_ALL}")
-        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} {EMOJI['ACCOUNT']} Get Account Info{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} {EMOJI['ACCOUNT']} Get Account Info (from API){Style.RESET_ALL}")
         print(f"{Fore.GREEN}0.{Style.RESET_ALL} {EMOJI['QUIT']} Exit")
         
         print(f"\n{Fore.CYAN}System: {self.system}{Style.RESET_ALL}")
@@ -797,9 +876,9 @@ def main():
 {Fore.CYAN}╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
 ║           🚀 Cursor Simple - Lightweight Tool 🚀         ║
-║                   Version 1.3.0                          ║
+║                   Version 1.3.0                           ║
 ║                                                           ║
-║  Cross-Platform Support: Windows | macOS | Linux         ║
+║  Cross-Platform Support: Windows | macOS | Linux          ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝{Style.RESET_ALL}
     """)
