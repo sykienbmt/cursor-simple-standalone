@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Cursor Simple - Lightweight Cross-Platform Tool
-Version: 1.3.0
+Cursor Simple - Lightweight Cross-Platform Tool (Enhanced Edition)
+Version: 2.0.0
 Author: Cursor Free VIP Community
 License: Educational Use Only
 
@@ -9,8 +9,16 @@ Features:
   1. Quit Cursor
   2. Reset Machine ID
   3. Update Token (Auto-fetch from API)
+     - Standard Mode (Close Cursor first)
+     - Seamless Mode (Keep Cursor running - NO RE-LOGIN!)
   4. Quick Reset (Machine ID + Token)
-  5. Get Account Info (View account details)
+  5. Get New Account (Fetch new account from API)
+
+New in 2.0.0:
+  - JWT Token Decoder for accurate expiry time display
+  - Seamless token update (no Cursor re-login required)
+  - Improved token expiry calculation with exact datetime
+  - Multi-mode token update (Standard/Seamless)
 
 Supported Platforms: Windows | macOS | Linux
 Dependencies: colorama (optional), requests (for API integration)
@@ -24,7 +32,10 @@ import uuid
 import platform
 import subprocess
 import time
+import base64
 from pathlib import Path
+from datetime import datetime, timedelta
+from typing import Optional, Dict
 
 # Try to import requests for API calls
 try:
@@ -64,6 +75,7 @@ class CursorSimple:
     def __init__(self):
         self.system = platform.system()
         self.paths = self._get_cursor_paths()
+        self.token_storage = Path(__file__).parent / "tokens_storage.json"
         
     def _get_cursor_paths(self):
         """Get Cursor paths based on OS"""
@@ -137,6 +149,48 @@ class CursorSimple:
             'macMachineId': secrets.token_hex(64),
             'sqmId': "{" + str(uuid.uuid4()).upper() + "}"
         }
+    
+    def decode_jwt(self, token: str) -> Optional[Dict]:
+        """Decode JWT Token to get payload information"""
+        try:
+            # JWT format: header.payload.signature
+            parts = token.split('.')
+            if len(parts) != 3:
+                return None
+            
+            # Decode payload (add padding if needed)
+            payload = parts[1]
+            padding = 4 - len(payload) % 4
+            if padding != 4:
+                payload += '=' * padding
+            
+            decoded = base64.urlsafe_b64decode(payload)
+            return json.loads(decoded)
+        except Exception as e:
+            return None
+    
+    def get_token_expiry(self, token: str) -> Optional[datetime]:
+        """Get token expiration time"""
+        payload = self.decode_jwt(token)
+        if payload and 'exp' in payload:
+            return datetime.fromtimestamp(payload['exp'])
+        return None
+    
+    def format_timedelta(self, td: timedelta) -> str:
+        """Format timedelta to human-readable string"""
+        days = td.days
+        hours, remainder = divmod(td.seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        
+        parts = []
+        if days > 0:
+            parts.append(f"{days} days")
+        if hours > 0:
+            parts.append(f"{hours} hours")
+        if minutes > 0:
+            parts.append(f"{minutes} minutes")
+        
+        return " ".join(parts) if parts else "< 1 minute"
     
     def _update_windows_registry(self, new_guid):
         """Update Windows Registry MachineGuid (Windows only)"""
@@ -401,8 +455,8 @@ class CursorSimple:
         return None
     
     def get_account_info(self):
-        """Get and display account information from API"""
-        print(f"\n{Fore.CYAN}{EMOJI['ACCOUNT']} Get Account Information{Style.RESET_ALL}")
+        """Get and display new account information from API"""
+        print(f"\n{Fore.CYAN}{EMOJI['ACCOUNT']} Get New Account{Style.RESET_ALL}")
         print(f"{Fore.CYAN}{'='*60}{Style.RESET_ALL}\n")
         
         if not HAS_REQUESTS:
@@ -418,7 +472,7 @@ class CursorSimple:
         token_data = self.fetch_token_from_api(api_url)
         
         if not token_data:
-            print(f"{Fore.RED}{EMOJI['ERROR']} Failed to fetch account information{Style.RESET_ALL}")
+            print(f"{Fore.RED}{EMOJI['ERROR']} Failed to fetch new account{Style.RESET_ALL}")
             return False
         
         # Extract information
@@ -431,9 +485,9 @@ class CursorSimple:
         print(f"{Fore.CYAN}{EMOJI['INFO']} Refreshing token...{Style.RESET_ALL}")
         access_token = self.refresh_cursor_token(token_full)
         
-        # Display full account information
+        # Display full new account information
         print(f"\n{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
-        print(f"{Fore.GREEN}{EMOJI['ACCOUNT']} Account Information{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}{EMOJI['ACCOUNT']} New Account Information{Style.RESET_ALL}")
         print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}\n")
         
         print(f"{Fore.CYAN}Row Number:{Style.RESET_ALL} {row}")
@@ -452,10 +506,79 @@ class CursorSimple:
         print(f"  {access_token}")
         
         print(f"\n{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
-        print(f"{Fore.GREEN}{EMOJI['SUCCESS']} Account information displayed successfully!{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}{EMOJI['SUCCESS']} New account information displayed successfully!{Style.RESET_ALL}")
         print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}\n")
         
         return True
+    
+    def update_token_seamless(self, force_quit=False):
+        """
+        Seamless token update - WITHOUT quitting Cursor
+        This prevents Cursor from prompting re-login
+        """
+        print(f"\n{Fore.CYAN}{EMOJI['TOKEN']} Seamless Token Update{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}{'='*60}{Style.RESET_ALL}\n")
+        print(f"{Fore.YELLOW}{EMOJI['INFO']} Updating token without closing Cursor...{Style.RESET_ALL}\n")
+        
+        # Only quit if forced (for compatibility)
+        if force_quit:
+            print(f"{Fore.CYAN}{EMOJI['INFO']} Step 1/3: Closing Cursor...{Style.RESET_ALL}")
+            self.quit_cursor()
+        else:
+            print(f"{Fore.GREEN}{EMOJI['SUCCESS']} Skipping Cursor close - seamless update mode{Style.RESET_ALL}")
+        
+        # Fetch token from API
+        print(f"\n{Fore.CYAN}{EMOJI['INFO']} Step 2/3: Fetching token...{Style.RESET_ALL}")
+        api_url = "https://script.google.com/macros/s/AKfycbxN6lLVmJk8b8qgi63eXeaeBzaiD0xeZnXlv6_PfbGBrZr3BhN7LT0QyMMga-ixT7M_/exec"
+        
+        token_data = self.fetch_token_from_api(api_url)
+        
+        if not token_data:
+            print(f"{Fore.RED}{EMOJI['ERROR']} Failed to fetch token from API{Style.RESET_ALL}")
+            return False
+        
+        # Get full token and email from API
+        token_full = token_data['token']
+        email = token_data['email']
+        password = token_data.get('password', '')
+        
+        # Refresh token via Cursor server to get valid accessToken
+        print(f"{Fore.CYAN}{EMOJI['INFO']} Token before refresh (first 50 chars): {token_full[:50]}...{Style.RESET_ALL}")
+        token = self.refresh_cursor_token(token_full)
+        print(f"{Fore.CYAN}{EMOJI['INFO']} Token after refresh (first 50 chars): {token[:50]}...{Style.RESET_ALL}")
+        
+        # Update database with new token
+        print(f"\n{Fore.CYAN}{EMOJI['INFO']} Step 3/3: Updating database...{Style.RESET_ALL}")
+        success = self._update_token_in_db(token, email, password)
+        
+        if success:
+            # Show token info
+            expire_time = self.get_token_expiry(token)
+            if expire_time:
+                now = datetime.now()
+                remaining = expire_time - now
+                print(f"\n{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
+                print(f"{Fore.GREEN}{EMOJI['SUCCESS']} Token Updated Successfully!{Style.RESET_ALL}")
+                print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
+                print(f"{Fore.CYAN}Account Information:{Style.RESET_ALL}")
+                print(f"{Fore.CYAN}├─ Email: {email}{Style.RESET_ALL}")
+                if password:
+                    print(f"{Fore.CYAN}├─ Password: {password}{Style.RESET_ALL}")
+                print(f"{Fore.CYAN}├─ Token: {token[:40]}...{Style.RESET_ALL}")
+                print(f"{Fore.CYAN}├─ Expires: {expire_time.strftime('%Y-%m-%d %H:%M:%S')}{Style.RESET_ALL}")
+                if remaining.total_seconds() > 0:
+                    print(f"{Fore.CYAN}└─ Valid for: {self.format_timedelta(remaining)}{Style.RESET_ALL}")
+                print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
+                
+                if not force_quit:
+                    print(f"{Fore.GREEN}{EMOJI['SUCCESS']} Token updated seamlessly - Cursor will use new token automatically!{Style.RESET_ALL}")
+                else:
+                    print(f"{Fore.GREEN}{EMOJI['SUCCESS']} You can now start Cursor and use the new account!{Style.RESET_ALL}")
+            
+            return True
+        else:
+            print(f"{Fore.RED}{EMOJI['ERROR']} Failed to update token in database{Style.RESET_ALL}")
+            return False
     
     def update_token(self):
         """Quick update token - auto-fetch from API, no confirmations"""
@@ -491,6 +614,28 @@ class CursorSimple:
         
         # Update SQLite database (no confirmation)
         print(f"\n{Fore.CYAN}{EMOJI['INFO']} Step 3/3: Updating database...{Style.RESET_ALL}")
+        success = self._update_token_in_db(token, email, password)
+        
+        if success:
+            # Display account info
+            print(f"\n{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}{EMOJI['SUCCESS']} Token Updated Successfully!{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
+            print(f"{Fore.CYAN}Account Information:{Style.RESET_ALL}")
+            print(f"{Fore.CYAN}├─ Email: {email}{Style.RESET_ALL}")
+            if password:
+                print(f"{Fore.CYAN}├─ Password: {password}{Style.RESET_ALL}")
+            print(f"{Fore.CYAN}└─ Token: {token[:40]}...{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
+            print(f"{Fore.GREEN}{EMOJI['SUCCESS']} You can now start Cursor and use the new account!{Style.RESET_ALL}")
+            
+            return True
+        else:
+            print(f"{Fore.RED}{EMOJI['ERROR']} Failed to update token{Style.RESET_ALL}")
+            return False
+    
+    def _update_token_in_db(self, token, email, password=''):
+        """Internal method to update token in database"""
         try:
             sqlite_path = self.paths['sqlite']
             
@@ -518,10 +663,13 @@ class CursorSimple:
             cursor.execute("PRAGMA journal_mode = WAL")
             cursor.execute("PRAGMA synchronous = NORMAL")
             
-            # Update all necessary authentication keys
-            import time
-            current_timestamp = int(time.time() * 1000)  # milliseconds
+            # Calculate expiry time from JWT
+            expire_timestamp = int(time.time() * 1000) + 86400000  # Default 24 hours
+            token_expire = self.get_token_expiry(token)
+            if token_expire:
+                expire_timestamp = int(token_expire.timestamp() * 1000)
             
+            # Update all necessary authentication keys
             updates = [
                 # Core authentication tokens
                 ('cursorAuth/accessToken', token),
@@ -533,7 +681,7 @@ class CursorSimple:
                 
                 # Token metadata
                 ('cursorAuth/tokenType', 'bearer'),
-                ('cursorAuth/expiresAt', str(current_timestamp + 86400000)),  # 24 hours from now
+                ('cursorAuth/expiresAt', str(expire_timestamp)),
                 
                 # Session tokens (some Cursor versions check these)
                 ('workos-session', token),
@@ -565,18 +713,6 @@ class CursorSimple:
                 print(f"{Fore.RED}{EMOJI['ERROR']} Warning: Could not verify token in database!{Style.RESET_ALL}")
             conn.close()
             
-            # Display account info
-            print(f"\n{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
-            print(f"{Fore.GREEN}{EMOJI['SUCCESS']} Token Updated Successfully!{Style.RESET_ALL}")
-            print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
-            print(f"{Fore.CYAN}Account Information:{Style.RESET_ALL}")
-            print(f"{Fore.CYAN}├─ Email: {email}{Style.RESET_ALL}")
-            if password:
-                print(f"{Fore.CYAN}├─ Password: {password}{Style.RESET_ALL}")
-            print(f"{Fore.CYAN}└─ Token: {token[:40]}...{Style.RESET_ALL}")
-            print(f"{Fore.GREEN}{'='*60}{Style.RESET_ALL}")
-            print(f"{Fore.GREEN}{EMOJI['SUCCESS']} You can now start Cursor and use the new account!{Style.RESET_ALL}")
-            
             return True
             
         except Exception as e:
@@ -606,66 +742,54 @@ class CursorSimple:
             email_result = cursor.fetchone()
             email = email_result[0] if email_result else "Not logged in"
             
-            # Get refresh token (try both keys)
-            cursor.execute("SELECT value FROM ItemTable WHERE key = 'cursorAuth/refreshToken'")
-            refresh_token_result = cursor.fetchone()
+            # Get access token
+            cursor.execute("SELECT value FROM ItemTable WHERE key = 'cursorAuth/accessToken'")
+            token_result = cursor.fetchone()
             
-            # If no refresh token, try access token
-            if not refresh_token_result:
-                cursor.execute("SELECT value FROM ItemTable WHERE key = 'cursorAuth/accessToken'")
-                refresh_token_result = cursor.fetchone()
+            # Get expiresAt
+            cursor.execute("SELECT value FROM ItemTable WHERE key = 'cursorAuth/expiresAt'")
+            expires_result = cursor.fetchone()
+            
+            conn.close()
             
             # Default values
             subscription = "Free_trial"
             remaining_days = "Unknown"
+            expire_time = None
             
-            # Try to get subscription info from token if available
-            if refresh_token_result and HAS_REQUESTS:
-                try:
-                    # Get the token
-                    token = refresh_token_result[0]
-                    
-                    # Check if token has the prefix format (user_xxx::jwt)
-                    # If it's just JWT, we can't use the refresh API
-                    if '::' not in token and 'user_' not in token:
-                        # This is just a JWT token, can't get days info
-                        conn.close()
-                        return {
-                            'email': email,
-                            'subscription': subscription,
-                            'remaining_days': remaining_days
-                        }
-                    
-                    # Prepare token for API
-                    refresh_server = 'https://token.cursorpro.com.cn'
-                    
-                    # Ensure proper encoding
-                    if '::' in token and '%3A%3A' not in token:
-                        token = token.replace('::', '%3A%3A')
-                    
-                    url = f"{refresh_server}/reftoken?token={token}"
-                    response = requests.get(url, timeout=10)
-                    
-                    if response.status_code == 200:
-                        data = response.json()
-                        if data.get('code') == 0:
-                            days_left = data.get('data', {}).get('days_left')
-                            
-                            if days_left is not None:
-                                remaining_days = int(days_left)
-                                # If has valid subscription, mark as Pro trial
-                                if remaining_days > 0:
-                                    subscription = "Free_trial (trialing)"
-                except Exception as e:
-                    # Silently fail, keep Unknown
-                    pass
-            
-            conn.close()
+            # Decode JWT to get accurate expiry time
+            if token_result:
+                token = token_result[0]
+                expire_time = self.get_token_expiry(token)
+                
+                if expire_time:
+                    now = datetime.now()
+                    if expire_time > now:
+                        remaining = expire_time - now
+                        remaining_days = remaining.days
+                        subscription = "Free_trial (active)"
+                    else:
+                        remaining_days = 0
+                        subscription = "Free_trial (expired)"
+                else:
+                    # Fallback to expiresAt field
+                    if expires_result:
+                        try:
+                            expires_timestamp = int(expires_result[0]) / 1000
+                            expire_time = datetime.fromtimestamp(expires_timestamp)
+                            now = datetime.now()
+                            if expire_time > now:
+                                remaining = expire_time - now
+                                remaining_days = remaining.days
+                                subscription = "Free_trial (active)"
+                        except:
+                            pass
             
             return {
                 'email': email,
                 'subscription': subscription,
-                'remaining_days': remaining_days
+                'remaining_days': remaining_days,
+                'expire_time': expire_time.strftime('%Y-%m-%d %H:%M:%S') if expire_time else 'Unknown'
             }
             
         except Exception as e:
@@ -952,9 +1076,13 @@ class CursorSimple:
             
             if account_info['remaining_days'] != 'Unknown':
                 days_color = Fore.GREEN if account_info['remaining_days'] > 7 else Fore.YELLOW if account_info['remaining_days'] > 2 else Fore.RED
-                print(f"{days_color}⏳ Remaining Pro Trial:{Style.RESET_ALL} {account_info['remaining_days']} days")
+                print(f"{days_color}⏳ Remaining Days:{Style.RESET_ALL} {account_info['remaining_days']} days")
             else:
-                print(f"{Fore.CYAN}⏳ Remaining Pro Trial:{Style.RESET_ALL} {account_info['remaining_days']}")
+                print(f"{Fore.CYAN}⏳ Remaining Days:{Style.RESET_ALL} {account_info['remaining_days']}")
+            
+            # Show expiry time
+            if account_info.get('expire_time') and account_info['expire_time'] != 'Unknown':
+                print(f"{Fore.CYAN}📅 Expires At:{Style.RESET_ALL} {account_info['expire_time']}")
             
             print(f"{Fore.CYAN}{'─'*60}{Style.RESET_ALL}\n")
         else:
@@ -966,8 +1094,7 @@ class CursorSimple:
         print(f"{Fore.GREEN}2.{Style.RESET_ALL} {EMOJI['RESET']} Reset Machine ID")
         print(f"{Fore.CYAN}3.{Style.RESET_ALL} {EMOJI['TOKEN']} Quick Update Token (Auto){Style.RESET_ALL}")
         print(f"{Fore.CYAN}4.{Style.RESET_ALL} {EMOJI['SUCCESS']} Quick Reset (Machine ID + Token){Style.RESET_ALL}")
-        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} {EMOJI['ACCOUNT']} Get Account Info (from API){Style.RESET_ALL}")
-        print(f"{Fore.YELLOW}6.{Style.RESET_ALL} 🔍 Debug Current Token{Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} {EMOJI['ACCOUNT']} Get New Account (from API){Style.RESET_ALL}")
         print(f"{Fore.GREEN}0.{Style.RESET_ALL} {EMOJI['QUIT']} Exit")
         
         print(f"\n{Fore.CYAN}System: {self.system}{Style.RESET_ALL}")
@@ -993,8 +1120,17 @@ class CursorSimple:
                     self.quit_cursor()  # Quit first
                     self.reset_machine_id()
                 elif choice == '3':
-                    self.quit_cursor()  # Quit first
-                    self.update_token()
+                    # Ask user which mode
+                    print(f"\n{Fore.YELLOW}Update Token Mode:{Style.RESET_ALL}")
+                    print(f"1. Standard (Close Cursor first)")
+                    print(f"2. Seamless (Keep Cursor running)")
+                    mode = input(f"{Fore.YELLOW}Choose mode (1-2): {Style.RESET_ALL}").strip()
+                    
+                    if mode == '2':
+                        self.update_token_seamless(force_quit=False)
+                    else:
+                        self.quit_cursor()
+                        self.update_token()
                 elif choice == '4':
                     self.quick_reset()
                 elif choice == '5':
@@ -1021,10 +1157,12 @@ def main():
     print(f"""
 {Fore.CYAN}╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║           🚀 Cursor Simple - Lightweight Tool 🚀         ║
-║                   Version 1.3.0                           ║
+║        🚀 Cursor Simple - Enhanced Edition 🚀            ║
+║                   Version 2.0.0                           ║
 ║                                                           ║
 ║  Cross-Platform Support: Windows | macOS | Linux          ║
+║  ✨ NEW: Seamless Token Update (No Re-login!)            ║
+║  ✨ NEW: Accurate Token Expiry Display                   ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝{Style.RESET_ALL}
     """)
