@@ -76,8 +76,27 @@ curl -fsSL "$REPO_URL/requirements.txt" -o "$TEMP_DIR/requirements.txt"
 print_success "Downloaded!"
 
 # Install dependencies
-print_info "Checking dependencies..."
-$PIP_CMD install -q -r "$TEMP_DIR/requirements.txt" 2>/dev/null || true
+print_info "Installing dependencies..."
+if $PYTHON_CMD -c "import colorama, requests" 2>/dev/null; then
+    print_success "Dependencies already installed!"
+else
+    print_info "Installing colorama and requests..."
+    # Try pip install with --user flag
+    if $PIP_CMD install --user colorama requests > /dev/null 2>&1; then
+        print_success "Dependencies installed!"
+    elif $PYTHON_CMD -m pip install --user colorama requests > /dev/null 2>&1; then
+        print_success "Dependencies installed!"
+    else
+        print_error "Failed to install dependencies automatically"
+        echo ""
+        echo "Please run manually:"
+        echo "  pip3 install --user colorama requests"
+        echo "  # or"
+        echo "  python3 -m pip install --user colorama requests"
+        echo ""
+        exit 1
+    fi
+fi
 
 # Make executable
 chmod +x "$TEMP_DIR/cursor_simple.py"
