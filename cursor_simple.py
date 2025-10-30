@@ -606,22 +606,40 @@ class CursorSimple:
             email_result = cursor.fetchone()
             email = email_result[0] if email_result else "Not logged in"
             
-            # Get access token to check subscription
-            cursor.execute("SELECT value FROM ItemTable WHERE key = 'cursorAuth/accessToken'")
-            token_result = cursor.fetchone()
+            # Get refresh token (try both keys)
+            cursor.execute("SELECT value FROM ItemTable WHERE key = 'cursorAuth/refreshToken'")
+            refresh_token_result = cursor.fetchone()
+            
+            # If no refresh token, try access token
+            if not refresh_token_result:
+                cursor.execute("SELECT value FROM ItemTable WHERE key = 'cursorAuth/accessToken'")
+                refresh_token_result = cursor.fetchone()
             
             # Default values
             subscription = "Free_trial"
             remaining_days = "Unknown"
             
             # Try to get subscription info from token if available
-            if token_result and HAS_REQUESTS:
+            if refresh_token_result and HAS_REQUESTS:
                 try:
-                    # Try to refresh and get subscription info
-                    token = token_result[0]
+                    # Get the token
+                    token = refresh_token_result[0]
+                    
+                    # Check if token has the prefix format (user_xxx::jwt)
+                    # If it's just JWT, we can't use the refresh API
+                    if '::' not in token and 'user_' not in token:
+                        # This is just a JWT token, can't get days info
+                        conn.close()
+                        return {
+                            'email': email,
+                            'subscription': subscription,
+                            'remaining_days': remaining_days
+                        }
+                    
+                    # Prepare token for API
                     refresh_server = 'https://token.cursorpro.com.cn'
                     
-                    # Encode token if needed
+                    # Ensure proper encoding
                     if '::' in token and '%3A%3A' not in token:
                         token = token.replace('::', '%3A%3A')
                     
@@ -631,11 +649,15 @@ class CursorSimple:
                     if response.status_code == 200:
                         data = response.json()
                         if data.get('code') == 0:
-                            remaining_days = data.get('data', {}).get('days_left', 'Unknown')
-                            # If has valid subscription, mark as Pro trial
-                            if remaining_days != 'Unknown' and remaining_days > 0:
-                                subscription = "Free_trial (trialing)"
-                except:
+                            days_left = data.get('data', {}).get('days_left')
+                            
+                            if days_left is not None:
+                                remaining_days = int(days_left)
+                                # If has valid subscription, mark as Pro trial
+                                if remaining_days > 0:
+                                    subscription = "Free_trial (trialing)"
+                except Exception as e:
+                    # Silently fail, keep Unknown
                     pass
             
             conn.close()
@@ -793,6 +815,127 @@ class CursorSimple:
         
         return True
     
+    def debug_current_token(self):
+        """Debug current token in database"""
+        print(f"\n{Fore.CYAN}🔍 Debug Current Token{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}{'='*60}{Style.RESET_ALL}\n")
+        
+        try:
+            sqlite_path = self.paths['sqlite']
+            
+            if not os.path.exists(sqlite_path):
+                print(f"{Fore.RED}{EMOJI['ERROR']} Database not found!{Style.RESET_ALL}")
+                print(f"{Fore.YELLOW}Path: {sqlite_path}{Style.RESET_ALL}")
+                return
+            
+            conn = sqlite3.connect(sqlite_path)
+            cursor = conn.cursor()
+            
+            # Get all auth-related keys
+            print(f"{Fore.YELLOW}Checking database keys...{Style.RESET_ALL}\n")
+            
+            keys_to_check = [
+                'cursorAuth/cachedEmail',
+                'cursorAuth/accessToken',
+                'cursorAuth/refreshToken',
+                'WorkosCursorSessionToken',
+                'workos-session'
+            ]
+            
+            for key in keys_to_check:
+                cursor.execute("SELECT value FROM ItemTable WHERE key = ?", (key,))
+                result = cursor.fetchone()
+                
+                if result:
+                    value = result[0]
+                    # Show first 50 chars and last 20 chars
+                    if len(value) > 70:
+                        display = f"{value[:50]}...{value[-20:]}"
+                    else:
+                        display = value
+                    
+                    print(f"{Fore.GREEN}✓ {key}{Style.RESET_ALL}")
+                    print(f"  Value: {display}")
+                    print(f"  Length: {len(value)} chars")
+                    
+                    # Check format
+                    if '::' in value:
+                        parts = value.split('::')
+                        print(f"  Format: Has '::' separator")
+                        print(f"  Prefix: {parts[0][:30]}...")
+                        print(f"  {Fore.GREEN}✓ Can use refresh API{Style.RESET_ALL}")
+                    elif 'user_' in value[:50]:
+                        print(f"  Format: Has 'user_' prefix")
+                        print(f"  {Fore.YELLOW}⚠️  Missing '::' separator{Style.RESET_ALL}")
+                    else:
+                        print(f"  Format: JWT only (no prefix)")
+                        print(f"  {Fore.RED}✗ Cannot use refresh API{Style.RESET_ALL}")
+                    
+                    print()
+                else:
+                    print(f"{Fore.RED}✗ {key}{Style.RESET_ALL}")
+                    print(f"  Not found in database\n")
+            
+            # Try to get days using current token
+            print(f"\n{Fore.CYAN}{'─'*60}{Style.RESET_ALL}")
+            print(f"{Fore.YELLOW}Testing refresh API...{Style.RESET_ALL}\n")
+            
+            cursor.execute("SELECT value FROM ItemTable WHERE key = 'cursorAuth/refreshToken'")
+            token_result = cursor.fetchone()
+            
+            if not token_result:
+                cursor.execute("SELECT value FROM ItemTable WHERE key = 'cursorAuth/accessToken'")
+                token_result = cursor.fetchone()
+            
+            if token_result and HAS_REQUESTS:
+                token = token_result[0]
+                
+                if '::' in token:
+                    # Encode
+                    if '%3A%3A' not in token:
+                        token = token.replace('::', '%3A%3A')
+                    
+                    try:
+                        refresh_server = 'https://token.cursorpro.com.cn'
+                        url = f"{refresh_server}/reftoken?token={token}"
+                        
+                        print(f"API URL: {url[:80]}...")
+                        print(f"\nCalling API...")
+                        
+                        response = requests.get(url, timeout=10)
+                        
+                        print(f"Status: {response.status_code}")
+                        
+                        if response.status_code == 200:
+                            data = response.json()
+                            print(f"\nResponse:")
+                            print(f"  Code: {data.get('code')}")
+                            print(f"  Message: {data.get('msg')}")
+                            
+                            if data.get('code') == 0:
+                                days_left = data.get('data', {}).get('days_left')
+                                expire_time = data.get('data', {}).get('expire_time')
+                                
+                                print(f"\n{Fore.GREEN}✓ Days Left: {days_left}{Style.RESET_ALL}")
+                                print(f"{Fore.GREEN}✓ Expires: {expire_time}{Style.RESET_ALL}")
+                            else:
+                                print(f"\n{Fore.RED}✗ API returned error{Style.RESET_ALL}")
+                        else:
+                            print(f"{Fore.RED}✗ HTTP error{Style.RESET_ALL}")
+                    
+                    except Exception as e:
+                        print(f"{Fore.RED}✗ Error: {str(e)}{Style.RESET_ALL}")
+                else:
+                    print(f"{Fore.YELLOW}⚠️  Token doesn't have '::' format{Style.RESET_ALL}")
+                    print(f"Cannot use refresh API to get days left")
+            
+            conn.close()
+            
+            print(f"\n{Fore.CYAN}{'='*60}{Style.RESET_ALL}")
+            
+        except Exception as e:
+            print(f"{Fore.RED}{EMOJI['ERROR']} Debug failed: {str(e)}{Style.RESET_ALL}")
+    
     def print_menu(self):
         """Print main menu"""
         # Get current account info
@@ -824,6 +967,7 @@ class CursorSimple:
         print(f"{Fore.CYAN}3.{Style.RESET_ALL} {EMOJI['TOKEN']} Quick Update Token (Auto){Style.RESET_ALL}")
         print(f"{Fore.CYAN}4.{Style.RESET_ALL} {EMOJI['SUCCESS']} Quick Reset (Machine ID + Token){Style.RESET_ALL}")
         print(f"{Fore.YELLOW}5.{Style.RESET_ALL} {EMOJI['ACCOUNT']} Get Account Info (from API){Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}6.{Style.RESET_ALL} 🔍 Debug Current Token{Style.RESET_ALL}")
         print(f"{Fore.GREEN}0.{Style.RESET_ALL} {EMOJI['QUIT']} Exit")
         
         print(f"\n{Fore.CYAN}System: {self.system}{Style.RESET_ALL}")
@@ -838,7 +982,7 @@ class CursorSimple:
             self.print_menu()
             
             try:
-                choice = input(f"\n{Fore.YELLOW}{EMOJI['ARROW']} Enter choice (0-5): {Style.RESET_ALL}").strip()
+                choice = input(f"\n{Fore.YELLOW}{EMOJI['ARROW']} Enter choice (0-6): {Style.RESET_ALL}").strip()
                 
                 if choice == '0':
                     print(f"\n{Fore.CYAN}{EMOJI['INFO']} Goodbye!{Style.RESET_ALL}")
@@ -855,8 +999,10 @@ class CursorSimple:
                     self.quick_reset()
                 elif choice == '5':
                     self.get_account_info()
+                elif choice == '6':
+                    self.debug_current_token()
                 else:
-                    print(f"{Fore.RED}{EMOJI['ERROR']} Invalid choice. Please enter 0-5{Style.RESET_ALL}")
+                    print(f"{Fore.RED}{EMOJI['ERROR']} Invalid choice. Please enter 0-6{Style.RESET_ALL}")
                 
                 input(f"\n{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
                 self.clear_screen()
