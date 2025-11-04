@@ -34,6 +34,64 @@ function Write-Error {
     Write-ColorOutput Red "❌ $Message"
 }
 
+function Write-Warning {
+    param($Message)
+    Write-ColorOutput Yellow "⚠️  $Message"
+}
+
+# Function to check if command exists
+function Test-Command {
+    param([string]$Command)
+    return [bool](Get-Command $Command -ErrorAction SilentlyContinue)
+}
+
+# Function to install Python automatically
+function Install-Python {
+    Write-Warning "Python not installed. Installing automatically..."
+    
+    # Check winget
+    if (Test-Command "winget") {
+        Write-Info "Installing Python via winget..."
+        try {
+            winget install -e --id Python.Python.3.12 --silent --accept-package-agreements --accept-source-agreements
+            # Refresh PATH
+            $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+            Write-Success "Python installed successfully!"
+            return $true
+        } catch {
+            Write-Warning "Could not install via winget, trying another method..."
+        }
+    }
+    
+    # If winget not available, download and install Python manually
+    Write-Info "Downloading Python installer..."
+    $pythonUrl = "https://www.python.org/ftp/python/3.12.0/python-3.12.0-amd64.exe"
+    $pythonInstaller = "$env:TEMP\python-installer.exe"
+    
+    try {
+        # Download Python installer
+        Invoke-WebRequest -Uri $pythonUrl -OutFile $pythonInstaller -UseBasicParsing
+        
+        Write-Info "Installing Python (may take a few minutes)..."
+        # Install Python with pip and add to PATH
+        Start-Process -FilePath $pythonInstaller -ArgumentList "/quiet", "InstallAllUsers=0", "PrependPath=1", "Include_pip=1" -Wait
+        
+        # Refresh PATH
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+        
+        # Clean up installer
+        Remove-Item $pythonInstaller -Force
+        
+        Write-Success "Python installed successfully!"
+        return $true
+    } catch {
+        Write-Error "Could not install Python automatically: $_"
+        Write-Info "Please install Python manually from: https://www.python.org/downloads/"
+        Write-Warning "Note: Make sure to check 'Add Python to PATH' during installation!"
+        exit 1
+    }
+}
+
 try {
     Write-Host ""
     Write-ColorOutput Green "╔═══════════════════════════════════════════════════════════╗"
@@ -61,9 +119,30 @@ try {
     }
     
     if (-not $pythonCmd) {
-        Write-Error "Python not installed!"
-        Write-Info "Install with: irm https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/install.ps1 | iex"
-        exit 1
+        Write-Warning "Python not found!"
+        Install-Python
+        Start-Sleep -Seconds 2
+        
+        # Check again after installation
+        foreach ($cmd in @("py", "python", "python3")) {
+            try {
+                $version = & $cmd --version 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    $pythonCmd = $cmd
+                    Write-Success "Found Python: $version"
+                    break
+                }
+            } catch {
+                continue
+            }
+        }
+        
+        # If still not found
+        if (-not $pythonCmd) {
+            Write-Error "Python installation failed or not ready!"
+            Write-Info "Please restart PowerShell and try again, or install manually from: https://www.python.org/downloads/"
+            exit 1
+        }
     }
     
     # Create temp directory
