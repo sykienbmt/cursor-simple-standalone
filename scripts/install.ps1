@@ -6,8 +6,8 @@
 $ErrorActionPreference = "Stop"
 
 # Configuration
-$REPO_URL = "https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD"
-$INSTALL_DIR = "$env:USERPROFILE\cursor-simple-standalone"
+$REPO_URL = "https://raw.githubusercontent.com/sykienbmt/simple-standalone/HEAD"
+$INSTALL_DIR = "$env:USERPROFILE\simple-standalone"
 $FILES = @(
     "cursor_simple.py",
     "requirements.txt",
