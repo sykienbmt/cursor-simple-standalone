@@ -7,7 +7,7 @@
 set -e
 
 # Configuration
-REPO_URL="https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD"
+REPO_URL="https://raw.githubusercontent.com/sykienbmt/simple-standalone/HEAD"
 TEMP_DIR="/tmp/cursor-simple-temp"
 
 # Colors
@@ -57,7 +57,7 @@ elif command -v python &> /dev/null; then
     PIP_CMD="pip"
 else
     print_error "Python not installed!"
-    print_info "Install with: curl -fsSL https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD/scripts/install.sh | bash"
+    print_info "Install with: curl -fsSL https://raw.githubusercontent.com/sykienbmt/simple-standalone/HEAD/scripts/install.sh | bash"
     exit 1
 fi
 

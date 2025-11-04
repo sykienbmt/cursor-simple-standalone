@@ -8,9 +8,7 @@ License: Educational Use Only
 Features:
   1. Quit Cursor
   2. Reset Machine ID
-  3. Update Token (Auto-fetch from API)
-  4. Quick Reset (Machine ID + Token)
-  5. Get New Account (Fetch new account from API)
+  3. Get New Account (Fetch new account from API)
 
 New in 2.0.0:
   - JWT Token Decoder for accurate expiry time display
@@ -1001,13 +999,6 @@ class CursorSimple:
         if account_info:
             print(f"{Fore.GREEN}📧 Email:{Style.RESET_ALL} {account_info['email']}")
             print(f"{Fore.YELLOW}📋 Subscription:{Style.RESET_ALL} {account_info['subscription']}")
-            
-            if account_info['remaining_days'] != 'Unknown':
-                days_color = Fore.GREEN if account_info['remaining_days'] > 7 else Fore.YELLOW if account_info['remaining_days'] > 2 else Fore.RED
-                print(f"{days_color}⏳ Remaining Pro Trial:{Style.RESET_ALL} {account_info['remaining_days']} days")
-            else:
-                print(f"{Fore.CYAN}⏳ Remaining Pro Trial:{Style.RESET_ALL} {account_info['remaining_days']}")
-            
             print(f"{Fore.CYAN}{'─'*60}{Style.RESET_ALL}\n")
         else:
             print(f"{Fore.YELLOW}📧 Email:{Style.RESET_ALL} Not logged in")
@@ -1016,9 +1007,7 @@ class CursorSimple:
         
         print(f"{Fore.GREEN}1.{Style.RESET_ALL} {EMOJI['QUIT']} Quit Cursor")
         print(f"{Fore.GREEN}2.{Style.RESET_ALL} {EMOJI['RESET']} Reset Machine ID")
-        print(f"{Fore.CYAN}3.{Style.RESET_ALL} {EMOJI['TOKEN']} Quick Update Token (Auto){Style.RESET_ALL}")
-        print(f"{Fore.CYAN}4.{Style.RESET_ALL} {EMOJI['SUCCESS']} Quick Reset (Machine ID + Token){Style.RESET_ALL}")
-        print(f"{Fore.YELLOW}5.{Style.RESET_ALL} {EMOJI['ACCOUNT']} Get New Account (from API){Style.RESET_ALL}")
+        print(f"{Fore.YELLOW}3.{Style.RESET_ALL} {EMOJI['ACCOUNT']} Get New Account (from API){Style.RESET_ALL}")
         print(f"{Fore.GREEN}0.{Style.RESET_ALL} {EMOJI['QUIT']} Exit")
         
         print(f"\n{Fore.CYAN}System: {self.system}{Style.RESET_ALL}")
@@ -1033,7 +1022,7 @@ class CursorSimple:
             self.print_menu()
             
             try:
-                choice = input(f"\n{Fore.YELLOW}{EMOJI['ARROW']} Enter choice (0-6): {Style.RESET_ALL}").strip()
+                choice = input(f"\n{Fore.YELLOW}{EMOJI['ARROW']} Enter choice (0-3): {Style.RESET_ALL}").strip()
                 
                 if choice == '0':
                     print(f"\n{Fore.CYAN}{EMOJI['INFO']} Goodbye!{Style.RESET_ALL}")
@@ -1044,15 +1033,9 @@ class CursorSimple:
                     self.quit_cursor()  # Quit first
                     self.reset_machine_id()
                 elif choice == '3':
-                    self.update_token()
-                elif choice == '4':
-                    self.quick_reset()
-                elif choice == '5':
                     self.get_account_info()
-                elif choice == '6':
-                    self.debug_current_token()
                 else:
-                    print(f"{Fore.RED}{EMOJI['ERROR']} Invalid choice. Please enter 0-6{Style.RESET_ALL}")
+                    print(f"{Fore.RED}{EMOJI['ERROR']} Invalid choice. Please enter 0-3{Style.RESET_ALL}")
                 
                 input(f"\n{Fore.YELLOW}Press Enter to continue...{Style.RESET_ALL}")
                 self.clear_screen()

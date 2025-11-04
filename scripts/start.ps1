@@ -6,7 +6,7 @@
 $ErrorActionPreference = "Stop"
 
 # Configuration
-$REPO_URL = "https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD"
+$REPO_URL = "https://raw.githubusercontent.com/sykienbmt/simple-standalone/HEAD"
 $TEMP_DIR = "$env:TEMP\cursor-simple-temp"
 
 # Colors

@@ -7,7 +7,7 @@
 set -e
 
 # Configuration
-REPO_URL="https://raw.githubusercontent.com/sykienbmt/cursor-simple-standalone/HEAD"
+REPO_URL="https://raw.githubusercontent.com/sykienbmt/simple-standalone/HEAD"
 INSTALL_DIR="$HOME/cursor-simple-standalone"
 FILES=(
     "cursor_simple.py"
