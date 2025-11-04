@@ -161,9 +161,55 @@ try {
     
     Write-Success "Downloaded!"
     
-    # Install dependencies quietly
+    # Install dependencies with better error handling
     Write-Info "Checking dependencies..."
-    & $pythonCmd -m pip install -q -r $requirementsPath 2>&1 | Out-Null
+    try {
+        # Try to upgrade pip first
+        & $pythonCmd -m pip install --upgrade pip --quiet 2>&1 | Out-Null
+        
+        # Install from requirements.txt with retry logic
+        $retryCount = 0
+        $maxRetries = 3
+        $success = $false
+        
+        while ($retryCount -lt $maxRetries -and -not $success) {
+            try {
+                $output = & $pythonCmd -m pip install -r $requirementsPath --no-cache-dir 2>&1
+                $exitCode = $LASTEXITCODE
+                
+                if ($exitCode -eq 0) {
+                    $success = $true
+                    Write-Success "Dependencies installed successfully!"
+                } else {
+                    throw "pip install failed with exit code: $exitCode"
+                }
+            } catch {
+                $retryCount++
+                if ($retryCount -lt $maxRetries) {
+                    Write-Warning "Retrying... (attempt $retryCount/$maxRetries)"
+                    Start-Sleep -Seconds 2
+                }
+            }
+        }
+        
+        # Try with --user flag if standard install failed
+        if (-not $success) {
+            Write-Warning "Trying with --user flag..."
+            $output = & $pythonCmd -m pip install --user -r $requirementsPath --no-cache-dir 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                Write-Success "Dependencies installed successfully!"
+                $success = $true
+            }
+        }
+        
+        if (-not $success) {
+            throw "Could not install dependencies after $maxRetries attempts"
+        }
+    } catch {
+        Write-Error "Failed to install dependencies: $_"
+        Write-Info "You can try manually: cd $TEMP_DIR ; pip install -r requirements.txt"
+        exit 1
+    }
     
     # Run the tool
     Write-Host ""
